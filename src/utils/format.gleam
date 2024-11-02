@@ -16,6 +16,18 @@ pub fn unformatted_cpf_regex() -> regex.Regex {
   unfomatted_cpf_regex
 }
 
+pub fn unformatted_cnpj_regex() -> regex.Regex {
+  let assert Ok(unformatted_cnpj_regex) =
+    regex.from_string("^\\d{2}\\.?\\d{3}\\.?\\d{3}/?\\d{4}-?\\d{2}$")
+  unformatted_cnpj_regex
+}
+
+pub fn formatted_cnpj_regex() -> regex.Regex {
+  let assert Ok(formatted_cnpj_regex) =
+    regex.from_string("^\\d{2}.\\d{3}.\\d{3}/\\d{4}-\\d{2}$")
+  formatted_cnpj_regex
+}
+
 pub fn format_cpf(cpf: String) -> String {
   let first_three_digits = string.slice(cpf, 0, 3)
   let second_three_digits = string.slice(cpf, 3, 3)

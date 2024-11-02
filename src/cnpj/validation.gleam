@@ -3,6 +3,7 @@ import gleam/int
 import gleam/io
 import gleam/iterator
 import gleam/list
+import gleam/regex
 import gleam/string
 import utils/format
 
@@ -14,6 +15,17 @@ pub fn handle_flexible_validation(cnpj: String) {
       handle_cleaned_cnpj(cleaned_cnpj)
     }
     _ -> False
+  }
+}
+
+pub fn handle_strict_validation(cnpj: String) {
+  let cnpj_regex = format.unformatted_cnpj_regex()
+
+  let is_regex_valid = regex.check(cnpj_regex, cnpj)
+
+  case is_regex_valid {
+    True -> handle_flexible_validation(cnpj)
+    False -> False
   }
 }
 
