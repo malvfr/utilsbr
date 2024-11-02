@@ -1,4 +1,4 @@
-//import cnpj/generator
+import cnpj/generator
 import cnpj/validation
 
 pub fn validate(cnpj: String) -> Bool {
@@ -8,6 +8,7 @@ pub fn validate(cnpj: String) -> Bool {
 pub fn strict_validate(cnpj: String) -> Bool {
   validation.handle_strict_validation(cnpj)
 }
-// pub fn generate(formatted: Bool) -> String {
-//   generator.generate(formatted)
-// }
+
+pub fn generate(formatted: Bool) -> String {
+  generator.generate(formatted)
+}

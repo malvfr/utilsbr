@@ -45,6 +45,26 @@ pub fn format_cpf(cpf: String) -> String {
   ])
 }
 
+pub fn format_cnpj(cnpj: String) -> String {
+  let first_two_digits = string.slice(cnpj, 0, 2)
+  let second_three_digits = string.slice(cnpj, 2, 3)
+  let third_three_digits = string.slice(cnpj, 5, 3)
+  let fourth_four_digits = string.slice(cnpj, 8, 4)
+  let last_two_digits = string.slice(cnpj, 12, 2)
+
+  string.concat([
+    first_two_digits,
+    ".",
+    second_three_digits,
+    ".",
+    third_three_digits,
+    "/",
+    fourth_four_digits,
+    "-",
+    last_two_digits,
+  ])
+}
+
 pub fn all_characteres_are_equal(str: String) {
   str
   |> string.split("")

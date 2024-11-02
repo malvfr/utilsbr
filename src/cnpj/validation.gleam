@@ -1,6 +1,5 @@
 import cnpj/cleaner
 import gleam/int
-import gleam/io
 import gleam/iterator
 import gleam/list
 import gleam/regex
@@ -59,7 +58,7 @@ fn calculate_verification_digits_and_validate(cnpj: String) {
   is_valid
 }
 
-fn calculate_first_verification_digit(first_twelve_digits: List(String)) {
+pub fn calculate_first_verification_digit(first_twelve_digits: List(String)) {
   let verifying_digits = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
 
   let sum =
@@ -76,7 +75,7 @@ fn calculate_first_verification_digit(first_twelve_digits: List(String)) {
   calculate_verification_digit(last_sum_checker)
 }
 
-fn calculate_second_verification_digit(thirteen_digits: List(String)) {
+pub fn calculate_second_verification_digit(thirteen_digits: List(String)) {
   let verifying_digits = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
 
   let sum =
