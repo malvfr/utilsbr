@@ -1,5 +1,9 @@
+import cpf/cleaner
 import cpf/generator
 import cpf/validation
+import utils/format
+
+const invalid_cpf_message = "Invalid CPF"
 
 /// Validates a given CPF (Cadastro de Pessoas Físicas) number using flexible validation rules.
 ///
@@ -69,4 +73,52 @@ pub fn strict_validate(cpf: String) -> Bool {
 /// @return A string representing the generated CPF number.
 pub fn generate(formatted: Bool) -> String {
   generator.generate(formatted)
+}
+
+/// Formats a CPF number by removing any non-numeric characters and applying the standard CPF format.
+///
+/// This function takes a CPF number as a string, cleans it by removing any non-numeric characters,
+/// and then formats it according to the standard CPF format.
+///
+/// # Examples
+///
+/// ```gleam
+/// import utilsbr/cpf
+/// let formatted_cpf = cpf.format("123.456.789-09")
+/// assert formatted_cpf == "123.456.789-09"
+/// ```
+///
+/// @param cpf The CPF number as a string.
+/// @return The formatted CPF number as a string.
+pub fn format(cpf: String) -> Result(String, String) {
+  let cleaned_cpf = cleaner.clean(cpf)
+
+  case validate(cleaned_cpf) {
+    True -> Ok(format.format_cpf(cleaned_cpf))
+    False -> Error(invalid_cpf_message)
+  }
+}
+
+/// Strips a CPF number of any non-numeric characters.
+///
+/// This function takes a CPF number as a string and removes any non-numeric characters,
+/// returning only the numeric characters as a string.
+///
+/// # Examples
+///
+/// ```gleam
+/// import utilsbr/cpf
+/// let stripped_cpf = cpf.strip("123.456.789-09")
+/// assert stripped_cpf == "12345678909"
+/// ```
+///
+/// @param cpf The CPF number as a string.
+/// @return The stripped CPF number as a string containing only numeric characters.
+pub fn strip(cpf: String) -> Result(String, String) {
+  let cleaned_cpf = cleaner.clean(cpf)
+
+  case validate(cleaned_cpf) {
+    True -> Ok(cleaned_cpf)
+    False -> Error(invalid_cpf_message)
+  }
 }

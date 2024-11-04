@@ -105,6 +105,42 @@ pub fn generate_formatted_cpf_test() {
   })
 }
 
+// Strip CPF
+pub fn strip_cpf_test() {
+  cpf.strip("161.803.571-10") |> should.equal(Ok("16180357110"))
+  cpf.strip("16180357110") |> should.equal(Ok("16180357110"))
+  cpf.strip("161.803.571-10") |> should.equal(Ok("16180357110"))
+  cpf.strip("161803571-10") |> should.equal(Ok("16180357110"))
+  cpf.strip(" 161.803.571-10 ") |> should.equal(Ok("16180357110"))
+  cpf.strip(" 161.803.571-10") |> should.equal(Ok("16180357110"))
+  cpf.strip("161.803.571-10 ") |> should.equal(Ok("16180357110"))
+  cpf.strip("161.803.571*10") |> should.equal(Ok("16180357110"))
+  cpf.strip("161*803;571-10") |> should.equal(Ok("16180357110"))
+  cpf.strip("161..803..571--10") |> should.equal(Ok("16180357110"))
+
+  // Should not be OK
+
+  ["16180357110123", "16157110", "1618035710", "161.803.571-11", "", "  "]
+  |> list.each(fn(cpf) { cpf.strip(cpf) |> should.equal(Error("Invalid CPF")) })
+}
+
+// Format CPF
+
+pub fn format_cpf_test() {
+  cpf.format("16180357110") |> should.equal(Ok("161.803.571-10"))
+  cpf.format("161.803.571-10") |> should.equal(Ok("161.803.571-10"))
+  cpf.format("161803571-10") |> should.equal(Ok("161.803.571-10"))
+  cpf.format("161.803.57110") |> should.equal(Ok("161.803.571-10"))
+  cpf.format(" 161.803.571-10 ") |> should.equal(Ok("161.803.571-10"))
+  cpf.format(" 161.803.571-10") |> should.equal(Ok("161.803.571-10"))
+  cpf.format("161.803.571-10 ") |> should.equal(Ok("161.803.571-10"))
+
+  // Should not be OK
+
+  ["16180357110123", "16157110", "1618035710", "", "  "]
+  |> list.each(fn(cpf) { cpf.format(cpf) |> should.equal(Error("Invalid CPF")) })
+}
+
 fn valid_cpf_list() {
   [
     "161.803.571-10", "133.314.421-00", "502.781.564-60", "504.025.803-89",

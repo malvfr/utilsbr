@@ -83,6 +83,49 @@ pub fn generate_formatted_cnpj_test() {
   })
 }
 
+// Strip CNPJ
+pub fn strip_cnpj_test() {
+  cnpj.strip("38.148.065/0001-51") |> should.equal(Ok("38148065000151"))
+  cnpj.strip("38148065000151") |> should.equal(Ok("38148065000151"))
+  cnpj.strip("38.148.065/0001-51") |> should.equal(Ok("38148065000151"))
+  cnpj.strip("38.148.065/0001-51") |> should.equal(Ok("38148065000151"))
+  cnpj.strip(" 38.148.065/0001-51 ") |> should.equal(Ok("38148065000151"))
+  cnpj.strip(" 38.148.065/0001-51") |> should.equal(Ok("38148065000151"))
+  cnpj.strip("38.148.065/0001-51 ") |> should.equal(Ok("38148065000151"))
+  cnpj.strip("38.148.065*0001-51") |> should.equal(Ok("38148065000151"))
+  cnpj.strip("38*148;065/0001-51") |> should.equal(Ok("38148065000151"))
+  cnpj.strip("38..148..065//0001-51") |> should.equal(Ok("38148065000151"))
+
+  // Should not be OK
+
+  [
+    "38148065000151123", "38165000151", "3814806500015", "38.148.065/0001-52",
+    "", "  ",
+  ]
+  |> list.each(fn(cnpj) {
+    cnpj.strip(cnpj) |> should.equal(Error("Invalid CNPJ"))
+  })
+}
+
+// Format CNPJ
+
+pub fn format_cnpj_test() {
+  cnpj.format("38148065000151") |> should.equal(Ok("38.148.065/0001-51"))
+  cnpj.format("38.148.065/0001-51") |> should.equal(Ok("38.148.065/0001-51"))
+  cnpj.format("38148065/0001-51") |> should.equal(Ok("38.148.065/0001-51"))
+  cnpj.format("38.148.0650001-51") |> should.equal(Ok("38.148.065/0001-51"))
+  cnpj.format(" 38.148.065/0001-51 ") |> should.equal(Ok("38.148.065/0001-51"))
+  cnpj.format(" 38.148.065/0001-51") |> should.equal(Ok("38.148.065/0001-51"))
+  cnpj.format("38.148.065/0001-51 ") |> should.equal(Ok("38.148.065/0001-51"))
+
+  // Should not be OK
+
+  ["38148065000151123", "38165000151", "3814806500015", "", "  "]
+  |> list.each(fn(cnpj) {
+    cnpj.format(cnpj) |> should.equal(Error("Invalid CNPJ"))
+  })
+}
+
 fn invalid_cnpj_list() {
   [
     "38.148.065/0001-52", "11.222.333/0001-82", "65.534.002/0001-07",

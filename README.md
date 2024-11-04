@@ -47,6 +47,16 @@ pub fn main() {
 
   let cpf = cpf.generate()
   > "873.220.050-15"
+
+  // Format CPF
+
+  let cpf = cpf.format("87322005015")
+
+  > "873.220.050-15"
+  // Strip CPF
+
+  let cpf = cpf.strip("873.220.050-15")
+  > "87322005015"
 }
 ```
 
@@ -64,6 +74,18 @@ pub fn main() {
 
   let cnpj = cnpj.generate()
   > "84.980.771/0001-82"
+
+  // Format CNPJ
+
+  let cnpj = cnpj.format("84980771000182")
+
+  > "84.980.771/0001-82"
+
+  // Strip CNPJ
+
+  let cnpj = cnpj.strip("84.980.771/0001-82")
+
+  > "84980771000182"
 }
 ```
 
