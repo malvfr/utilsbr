@@ -18,18 +18,52 @@ gleam add utilsbr@1
 
 # Basic usage
 
+### Import the module
+
+Import the module and use the functions to validate and generate CPF and CNPJ documents.
+
 ```gleam
 import utilsbr/cpf
 import utilsbr/cnpj
 
 pub fn main() {
-  cpf.validate("123.456.789-09")
-  cpf.strict_validate("123.456.789-09")
-  cpf.generate(True)
+  // Validate CPF
+  cpf.validate("873.220.050-15")
 
-  cnpj.validate("12.345.678/0001-09")
-  cnpj.strict_validate("12.345.678/0001-09")
-  cnpj.generate(True)
+}
+```
+
+### CPF functions
+
+```gleam
+import utilsbr/cpf
+
+pub fn main() {
+  // Validate CPF
+  assert True = cpf.validate("873.220.050-15")
+  assert False = cpf.validate("123.456.789-09")
+
+  // Generate CPF
+
+  let cpf = cpf.generate()
+  > "873.220.050-15"
+}
+```
+
+### CNPJ functions
+
+```gleam
+import utilsbr/cnpj
+
+pub fn main() {
+  // Validate CNPJ
+  assert True = cnpj.validate("84.980.771/0001-82")
+  assert False = cnpj.validate("12.345.678/0001-09")
+
+  // Generate CNPJ
+
+  let cnpj = cnpj.generate()
+  > "84.980.771/0001-82"
 }
 ```
 

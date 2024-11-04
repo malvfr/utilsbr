@@ -40,10 +40,10 @@ pub fn validate(cpf: String) -> Bool {
 /// ```gleam
 /// import utilsbr/cpf
 ///
-/// let valid_cpf = cpf.strict_validate("123.456.789-09")
+/// let valid_cpf = cpf.strict_validate("873.220.050-15")
 /// assert True = valid_cpf
 ///
-/// let invalid_cpf = cpf.strict_validate("123.456.789-00")
+/// let invalid_cpf = cpf.strict_validate("  873.220.050-15  ")
 /// assert False = invalid_cpf
 /// ```
 ///
@@ -60,10 +60,10 @@ pub fn strict_validate(cpf: String) -> Bool {
 /// import utilsbr/cpf
 /// 
 /// let cpf = cpf.generate(True)
-/// > "123.456.789-00"
+/// > "873.220.050-15"
 /// 
 /// let cpf = cpf.generate(False)
-/// > "12345678900"
+/// > "87322005015"
 /// ```
 /// @param formatted A boolean indicating whether the generated CPF number should be formatted.
 /// @return A string representing the generated CPF number.

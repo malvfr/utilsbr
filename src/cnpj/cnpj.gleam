@@ -31,8 +31,8 @@ pub fn validate(cnpj: String) -> Bool {
 /// ```gleam
 /// import utilsbr/cnpj
 /// 
-/// assert True = cnpj.strict_validate("12.345.678/0001-95")
-/// assert False = cnpj.strict_validate("12345678000195")
+/// assert True = cnpj.strict_validate("84.980.771/0001-82")
+/// assert False = cnpj.strict_validate("    84.980.771/0001-82  ")
 /// ```
 /// 
 /// @param cnpj The CNPJ number to be validated as a string.
@@ -54,8 +54,8 @@ pub fn strict_validate(cnpj: String) -> Bool {
 /// let formatted_cnpj = cnpj.generate(True)
 /// let unformatted_cnpj = cnpj.generate(False)
 /// 
-/// assert formatted_cnpj == "12.345.678/0001-95"
-/// assert unformatted_cnpj == "12345678000195"
+/// assert formatted_cnpj == "84.980.771/0001-82"
+/// assert unformatted_cnpj == "84980771000182"
 /// ```
 /// 
 /// @param formatted A boolean indicating whether the generated CNPJ should be formatted.
