@@ -43,6 +43,12 @@ pub fn main() {
   assert True = cpf.validate("873.220.050-15")
   assert False = cpf.validate("123.456.789-09")
 
+  // Strict Validate CPF
+
+  assert True = cpf.strict_validate("873.220.050-15")
+  assert False = cpf.strict_validate(" 873.220.050-15 ")
+  assert False = cpf.strict_validate(" 873.220.050-15")
+
   // Generate CPF
 
   let cpf = cpf.generate()
@@ -69,6 +75,12 @@ pub fn main() {
   // Validate CNPJ
   assert True = cnpj.validate("84.980.771/0001-82")
   assert False = cnpj.validate("12.345.678/0001-09")
+
+  // Strict Validate CNPJ
+
+  assert True = cnpj.strict_validate("84.980.771/0001-82")
+  assert False = cnpj.strict_validate(" 84.980.771/0001-82 ")
+  assert False = cnpj.strict_validate(" 84.980.771/0001-82")
 
   // Generate CNPJ
 
