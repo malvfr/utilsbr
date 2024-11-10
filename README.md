@@ -13,8 +13,12 @@ A Gleam library for Brazilian documents utilities. It provides functions to vali
 Run the following command in your project directory:
 
 ```sh
-gleam add utilsbr@1
+gleam add utilsbr@0.5.0
 ```
+
+Then run `gleam build` to download and compile the dependencies.
+
+````
 
 # Basic usage
 
@@ -31,7 +35,7 @@ pub fn main() {
   cpf.validate("873.220.050-15")
 
 }
-```
+````
 
 ### CPF functions
 
