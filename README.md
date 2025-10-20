@@ -8,12 +8,19 @@
 
 A Gleam library for Brazilian documents utilities. It provides functions to validate and generate CPF and CNPJ documents.
 
+## Features
+
+- CPF validation, generation, formatting and stripping
+- CNPJ validation (numeric and alphanumeric), generation, formatting and stripping
+- Support for both traditional numeric CNPJs (14 digits) and new alphanumeric CNPJs (12 alphanumeric + 2 digit checksum)
+- Flexible and strict validation modes
+
 # Installation
 
 Run the following command in your project directory:
 
 ```sh
-gleam add utilsbr@0.5.0
+gleam add utilsbr@0.6.0
 ```
 
 Then run `gleam build` to download and compile the dependencies.
@@ -76,9 +83,13 @@ pub fn main() {
 import utilsbr/cnpj
 
 pub fn main() {
-  // Validate CNPJ
+  // Validate CNPJ (numeric)
   assert True = cnpj.validate("84.980.771/0001-82")
   assert False = cnpj.validate("12.345.678/0001-09")
+
+  // Validate CNPJ (alphanumeric) - New feature!
+  assert True = cnpj.validate("12.ABC.345/01DE-35")
+  assert True = cnpj.validate("12ABC34501DE35")
 
   // Strict Validate CNPJ
 
@@ -86,22 +97,44 @@ pub fn main() {
   assert False = cnpj.strict_validate(" 84.980.771/0001-82 ")
   assert False = cnpj.strict_validate(" 84.980.771/0001-82")
 
-  // Generate CNPJ
+  // Generate CNPJ (numeric)
 
-  let cnpj = cnpj.generate()
+  let cnpj = cnpj.generate(True)
   > "84.980.771/0001-82"
 
   // Format CNPJ
 
   let cnpj = cnpj.format("84980771000182")
-
   > "84.980.771/0001-82"
 
   // Strip CNPJ
 
   let cnpj = cnpj.strip("84.980.771/0001-82")
-
   > "84980771000182"
+}
+```
+
+### Alphanumeric CNPJ Support
+
+Starting from version 0.6.0, utilsbr supports the new alphanumeric CNPJ format announced by Receita Federal, which will be implemented from July 2026. The alphanumeric CNPJ has 12 alphanumeric positions (A-Z and 0-9) followed by 2 numeric verification digits.
+
+```gleam
+import utilsbr/cnpj
+import cnpj/alphanumeric
+
+pub fn main() {
+  // Validate alphanumeric CNPJ
+  cnpj.validate("12.ABC.345/01DE-35")  // True
+
+  // Clean alphanumeric CNPJ
+  alphanumeric.clean_alphanumeric("12.ABC.345/01DE-35")  // "12ABC34501DE35"
+
+  // Format alphanumeric CNPJ
+  alphanumeric.format_alphanumeric("12ABC34501DE35")  // "12.ABC.345/01DE-35"
+
+  // Check if CNPJ is alphanumeric
+  alphanumeric.is_alphanumeric("12ABC34501DE35")  // True
+  alphanumeric.is_alphanumeric("12345678901234")  // False
 }
 ```
 

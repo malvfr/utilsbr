@@ -1,4 +1,4 @@
-import gleam/regex
+import gleam/regexp
 
 /// Cleans a CNPJ string by removing all non-numeric characters.
 ///
@@ -11,7 +11,8 @@ import gleam/regex
 /// # Returns
 /// A new string with only the numeric characters from the original CNPJ.
 pub fn clean(cnpj: String) {
-  let assert Ok(only_numbers_regex) = regex.from_string("[^0-9]")
+  let assert Ok(only_numbers_regex) =
+    regexp.compile("[^0-9]", regexp.Options(False, False))
 
-  regex.replace(each: only_numbers_regex, in: cnpj, with: "")
+  regexp.replace(each: only_numbers_regex, in: cnpj, with: "")
 }

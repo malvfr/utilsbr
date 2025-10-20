@@ -1,6 +1,6 @@
 import cpf/cpf
 import gleam/list
-import gleam/regex
+import gleam/regexp
 import gleeunit/should
 import utils/format
 
@@ -65,8 +65,6 @@ pub fn validate_with_second_verifier_higher_than_zero_test() {
   cpf.validate("587.304.814-22") |> should.be_true
 }
 
-// Strict validation
-
 pub fn strict_validate_test() {
   cpf.strict_validate("16180357110") |> should.be_true
   cpf.strict_validate("161.803.571-10") |> should.be_true
@@ -83,15 +81,13 @@ pub fn strict_validate_test() {
   cpf.strict_validate("16180357110123") |> should.be_false
 }
 
-// Generate CPF
-
 pub fn generate_unformatted_cpf_test() {
   list.range(1, 100_000)
   |> list.each(fn(_) {
     let cpf_string = cpf.generate(False)
     cpf.validate(cpf_string) |> should.be_true
 
-    regex.check(format.unformatted_cpf_regex(), cpf_string) |> should.be_true
+    regexp.check(format.unformatted_cpf_regex(), cpf_string) |> should.be_true
   })
 }
 
@@ -101,11 +97,10 @@ pub fn generate_formatted_cpf_test() {
     let cpf_string = cpf.generate(True)
     cpf.validate(cpf_string) |> should.be_true
 
-    regex.check(format.formatted_cpf_regex(), cpf_string) |> should.be_true
+    regexp.check(format.formatted_cpf_regex(), cpf_string) |> should.be_true
   })
 }
 
-// Strip CPF
 pub fn strip_cpf_test() {
   cpf.strip("161.803.571-10") |> should.equal(Ok("16180357110"))
   cpf.strip("16180357110") |> should.equal(Ok("16180357110"))
@@ -118,13 +113,9 @@ pub fn strip_cpf_test() {
   cpf.strip("161*803;571-10") |> should.equal(Ok("16180357110"))
   cpf.strip("161..803..571--10") |> should.equal(Ok("16180357110"))
 
-  // Should not be OK
-
   ["16180357110123", "16157110", "1618035710", "161.803.571-11", "", "  "]
   |> list.each(fn(cpf) { cpf.strip(cpf) |> should.equal(Error("Invalid CPF")) })
 }
-
-// Format CPF
 
 pub fn format_cpf_test() {
   cpf.format("16180357110") |> should.equal(Ok("161.803.571-10"))
@@ -135,10 +126,106 @@ pub fn format_cpf_test() {
   cpf.format(" 161.803.571-10") |> should.equal(Ok("161.803.571-10"))
   cpf.format("161.803.571-10 ") |> should.equal(Ok("161.803.571-10"))
 
-  // Should not be OK
-
   ["16180357110123", "16157110", "1618035710", "", "  "]
   |> list.each(fn(cpf) { cpf.format(cpf) |> should.equal(Error("Invalid CPF")) })
+}
+
+pub fn validate_empty_string_test() {
+  cpf.validate("") |> should.be_false
+  cpf.strict_validate("") |> should.be_false
+}
+
+pub fn validate_only_whitespace_test() {
+  cpf.validate("   ") |> should.be_false
+  cpf.validate("\t") |> should.be_false
+  cpf.validate("\n") |> should.be_false
+  cpf.validate(" \t\n ") |> should.be_false
+}
+
+pub fn validate_with_tabs_test() {
+  cpf.validate("161\t803\t571\t10") |> should.be_true
+  cpf.validate("\t161.803.571-10\t") |> should.be_true
+}
+
+pub fn validate_with_multiple_spaces_test() {
+  cpf.validate("161   803   571   10") |> should.be_true
+  cpf.validate("161.803.571-10     ") |> should.be_true
+  cpf.validate("     161.803.571-10") |> should.be_true
+}
+
+pub fn validate_with_newlines_test() {
+  cpf.validate("161.803.571-10\n") |> should.be_true
+  cpf.validate("\n161.803.571-10") |> should.be_true
+}
+
+pub fn validate_with_leading_zeros_test() {
+  cpf.validate("001.048.208-37") |> should.be_true
+  cpf.validate("00104820837") |> should.be_true
+  cpf.validate("007.471.284-56") |> should.be_true
+}
+
+pub fn validate_extremely_long_string_test() {
+  cpf.validate("161.803.571-10000000000000000000") |> should.be_false
+  cpf.validate("16180357110000000000000000000000") |> should.be_false
+}
+
+pub fn validate_only_special_characters_test() {
+  cpf.validate(".-.-.-") |> should.be_false
+  cpf.validate("...---...") |> should.be_false
+  cpf.validate("***********") |> should.be_false
+}
+
+pub fn validate_mixed_valid_invalid_chars_test() {
+  cpf.validate("161@803#571$10") |> should.be_true
+  cpf.validate("161*803&571%10") |> should.be_true
+}
+
+pub fn validate_unicode_characters_test() {
+  cpf.validate("161€803£571¥10") |> should.be_true
+  cpf.validate("161🎉803🎈571🎊10") |> should.be_true
+}
+
+pub fn validate_with_remainder_zero_test() {
+  cpf.validate("034.224.826-01") |> should.be_true
+}
+
+pub fn validate_almost_valid_cpf_test() {
+  cpf.validate("161.803.571-11") |> should.be_false
+  cpf.validate("161.803.571-09") |> should.be_false
+  cpf.validate("161.803.570-10") |> should.be_false
+}
+
+pub fn validate_single_char_test() {
+  cpf.validate("1") |> should.be_false
+  cpf.validate("a") |> should.be_false
+}
+
+pub fn validate_exact_10_digits_test() {
+  cpf.validate("1618035711") |> should.be_false
+}
+
+pub fn validate_exact_12_digits_test() {
+  cpf.validate("161803571100") |> should.be_false
+}
+
+pub fn strip_empty_string_test() {
+  cpf.strip("") |> should.equal(Error("Invalid CPF"))
+  cpf.strip("   ") |> should.equal(Error("Invalid CPF"))
+}
+
+pub fn format_empty_string_test() {
+  cpf.format("") |> should.equal(Error("Invalid CPF"))
+  cpf.format("   ") |> should.equal(Error("Invalid CPF"))
+}
+
+pub fn strip_with_only_special_chars_test() {
+  cpf.strip(".-.-.-") |> should.equal(Error("Invalid CPF"))
+  cpf.strip("***") |> should.equal(Error("Invalid CPF"))
+}
+
+pub fn format_with_only_special_chars_test() {
+  cpf.format(".-.-.-") |> should.equal(Error("Invalid CPF"))
+  cpf.format("***") |> should.equal(Error("Invalid CPF"))
 }
 
 fn valid_cpf_list() {

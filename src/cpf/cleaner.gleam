@@ -1,4 +1,4 @@
-import gleam/regex
+import gleam/regexp
 
 /// Cleans a given CPF string by removing all non-numeric characters.
 ///
@@ -21,7 +21,8 @@ import gleam/regex
 ///
 /// A new string containing only the numeric characters from the input CPF.
 pub fn clean(cpf: String) {
-  let assert Ok(only_numbers_regex) = regex.from_string("[^0-9]")
+  let assert Ok(only_numbers_regex) =
+    regexp.compile("[^0-9]", regexp.Options(False, False))
 
-  regex.replace(each: only_numbers_regex, in: cpf, with: "")
+  regexp.replace(each: only_numbers_regex, in: cpf, with: "")
 }

@@ -18,11 +18,8 @@ import utils/format
 /// - `String`: The generated CPF number, optionally formatted.
 pub fn generate(formatted: Bool) -> String {
   let first_nine_digits =
-    list.fold(list.range(1, 9), "", fn(acc, _elm) {
-      let cpf_str_digit = int.random(9) |> int.to_string()
-      string.append(acc, cpf_str_digit)
-    })
-    |> string.split("")
+    list.range(1, 9)
+    |> list.map(fn(_) { int.random(9) |> int.to_string() })
 
   let first_validation_digit =
     validation.calculate_first_verification_digit(first_nine_digits)

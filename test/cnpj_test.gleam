@@ -1,10 +1,10 @@
+import cnpj/alphanumeric
 import cnpj/cnpj
 import gleam/list
-import gleam/regex
+import gleam/regexp
 import gleeunit/should
 import utils/format
 
-// CNPJ validation
 pub fn cnpj_validate_same_digits_test() {
   cnpj.validate("00.000.000/0000-00") |> should.be_false
   cnpj.validate("11.111.111/1111-11") |> should.be_false
@@ -49,8 +49,6 @@ pub fn validate_cnpj_invalid_cnpjs_test() {
   |> list.each(fn(cnpj) { cnpj.validate(cnpj) |> should.be_false })
 }
 
-// Strict validation
-
 pub fn strict_validation_valid_cnpjs_test() {
   let invalid_cnpj_list = [
     " 38.148.065/0001 -51", "*11.222.333/000181", "65534002/0001-06  ",
@@ -69,7 +67,7 @@ pub fn generate_unformatted_cnpj_test() {
     let cnpj_string = cnpj.generate(False)
     cnpj.validate(cnpj_string) |> should.be_true
 
-    regex.check(format.unformatted_cnpj_regex(), cnpj_string) |> should.be_true
+    regexp.check(format.unformatted_cnpj_regex(), cnpj_string) |> should.be_true
   })
 }
 
@@ -79,11 +77,10 @@ pub fn generate_formatted_cnpj_test() {
     let cnpj_string = cnpj.generate(True)
     cnpj.validate(cnpj_string) |> should.be_true
 
-    regex.check(format.formatted_cnpj_regex(), cnpj_string) |> should.be_true
+    regexp.check(format.formatted_cnpj_regex(), cnpj_string) |> should.be_true
   })
 }
 
-// Strip CNPJ
 pub fn strip_cnpj_test() {
   cnpj.strip("38.148.065/0001-51") |> should.equal(Ok("38148065000151"))
   cnpj.strip("38148065000151") |> should.equal(Ok("38148065000151"))
@@ -96,8 +93,6 @@ pub fn strip_cnpj_test() {
   cnpj.strip("38*148;065/0001-51") |> should.equal(Ok("38148065000151"))
   cnpj.strip("38..148..065//0001-51") |> should.equal(Ok("38148065000151"))
 
-  // Should not be OK
-
   [
     "38148065000151123", "38165000151", "3814806500015", "38.148.065/0001-52",
     "", "  ",
@@ -107,8 +102,6 @@ pub fn strip_cnpj_test() {
   })
 }
 
-// Format CNPJ
-
 pub fn format_cnpj_test() {
   cnpj.format("38148065000151") |> should.equal(Ok("38.148.065/0001-51"))
   cnpj.format("38.148.065/0001-51") |> should.equal(Ok("38.148.065/0001-51"))
@@ -117,8 +110,6 @@ pub fn format_cnpj_test() {
   cnpj.format(" 38.148.065/0001-51 ") |> should.equal(Ok("38.148.065/0001-51"))
   cnpj.format(" 38.148.065/0001-51") |> should.equal(Ok("38.148.065/0001-51"))
   cnpj.format("38.148.065/0001-51 ") |> should.equal(Ok("38.148.065/0001-51"))
-
-  // Should not be OK
 
   ["38148065000151123", "38165000151", "3814806500015", "", "  "]
   |> list.each(fn(cnpj) {
@@ -142,6 +133,237 @@ fn invalid_cnpj_list() {
     "70.630.366/0001-21", "02.471.451/0001-33", "64.040.061/0001-66",
     "74.105.132/0001-15", "75.180.438/0001-07", "03.583.165/0001-22",
   ]
+}
+
+pub fn validate_alphanumeric_cnpj_test() {
+  cnpj.validate("12ABC34501DE35") |> should.be_true
+  cnpj.validate("12.ABC.345/01DE-35") |> should.be_true
+  cnpj.validate("38.148.065/0001-51") |> should.be_true
+  cnpj.validate("38148065000151") |> should.be_true
+}
+
+pub fn validate_invalid_alphanumeric_cnpj_test() {
+  cnpj.validate("12ABC34501DE34") |> should.be_false
+  cnpj.validate("12ABC34501DE36") |> should.be_false
+  cnpj.validate("12ABC34501DE3") |> should.be_false
+  cnpj.validate("12ABC34501DE356") |> should.be_false
+}
+
+pub fn alphanumeric_clean_test() {
+  alphanumeric.clean_alphanumeric("12.ABC.345/01DE-35")
+  |> should.equal("12ABC34501DE35")
+
+  alphanumeric.clean_alphanumeric("  12-ABC-345-01DE-35  ")
+  |> should.equal("12ABC34501DE35")
+
+  alphanumeric.clean_alphanumeric("12abc34501de35")
+  |> should.equal("12ABC34501DE35")
+}
+
+pub fn alphanumeric_format_test() {
+  alphanumeric.format_alphanumeric("12ABC34501DE35")
+  |> should.equal("12.ABC.345/01DE-35")
+
+  alphanumeric.format_alphanumeric("A1B2C3D4E5F689")
+  |> should.equal("A1.B2C.3D4/E5F6-89")
+}
+
+pub fn alphanumeric_is_alphanumeric_test() {
+  alphanumeric.is_alphanumeric("12ABC34501DE35") |> should.be_true
+  alphanumeric.is_alphanumeric("12345678901234") |> should.be_false
+  alphanumeric.is_alphanumeric("AB12CD34EF1234") |> should.be_true
+}
+
+pub fn alphanumeric_calculate_dv_test() {
+  let first_twelve = [
+    "1", "2", "A", "B", "C", "3", "4", "5", "0", "1", "D", "E",
+  ]
+
+  case
+    alphanumeric.calculate_first_verification_digit_alphanumeric(first_twelve)
+  {
+    Ok(dv) -> dv |> should.equal(3)
+    Error(_) -> should.fail()
+  }
+
+  let thirteen = [
+    "1", "2", "A", "B", "C", "3", "4", "5", "0", "1", "D", "E", "3",
+  ]
+
+  case alphanumeric.calculate_second_verification_digit_alphanumeric(thirteen) {
+    Ok(dv) -> dv |> should.equal(5)
+    Error(_) -> should.fail()
+  }
+}
+
+pub fn validate_receita_federal_examples_test() {
+  valid_alphanumeric_cnpj_list()
+  |> list.each(fn(cnpj_str) { cnpj.validate(cnpj_str) |> should.be_true })
+}
+
+pub fn validate_invalid_receita_federal_examples_test() {
+  invalid_alphanumeric_cnpj_list()
+  |> list.each(fn(cnpj_str) { cnpj.validate(cnpj_str) |> should.be_false })
+}
+
+fn valid_alphanumeric_cnpj_list() {
+  [
+    "12.ABC.345/01DE-35",
+    "12ABC34501DE35",
+    "AA345678000114",
+    "AA.345.678/0001-14",
+    "AA345678000A29",
+    "AA.345.678/000A-29",
+    "12345678000A08",
+    "12.345.678/000A-08",
+  ]
+}
+
+fn invalid_alphanumeric_cnpj_list() {
+  [
+    "AA345678000113",
+    "AA345678000115",
+    "AA345678000A28",
+    "AA345678000A30",
+    "12345678000A07",
+    "12345678000A09",
+    "12ABC34501DE34",
+    "12ABC34501DE36",
+  ]
+}
+
+pub fn cnpj_validate_empty_string_test() {
+  cnpj.validate("") |> should.be_false
+  cnpj.strict_validate("") |> should.be_false
+}
+
+pub fn cnpj_validate_only_whitespace_test() {
+  cnpj.validate("   ") |> should.be_false
+  cnpj.validate("\t") |> should.be_false
+  cnpj.validate("\n") |> should.be_false
+  cnpj.validate(" \t\n ") |> should.be_false
+}
+
+pub fn cnpj_validate_with_tabs_test() {
+  cnpj.validate("38\t148\t065\t0001\t51") |> should.be_true
+  cnpj.validate("\t38.148.065/0001-51\t") |> should.be_true
+}
+
+pub fn cnpj_validate_with_multiple_spaces_test() {
+  cnpj.validate("38   148   065   0001   51") |> should.be_true
+  cnpj.validate("38.148.065/0001-51     ") |> should.be_true
+  cnpj.validate("     38.148.065/0001-51") |> should.be_true
+}
+
+pub fn cnpj_validate_with_newlines_test() {
+  cnpj.validate("38.148.065/0001-51\n") |> should.be_true
+  cnpj.validate("\n38.148.065/0001-51") |> should.be_true
+}
+
+pub fn cnpj_validate_with_leading_zeros_test() {
+  cnpj.validate("00.217.202/0001-90") |> should.be_true
+  cnpj.validate("00217202000190") |> should.be_true
+  cnpj.validate("00.163.616/0001-83") |> should.be_true
+}
+
+pub fn cnpj_validate_extremely_long_string_test() {
+  cnpj.validate("38.148.065/0001-51000000000000000000") |> should.be_false
+  cnpj.validate("38148065000151000000000000000000") |> should.be_false
+}
+
+pub fn cnpj_validate_only_special_characters_test() {
+  cnpj.validate(".-./--") |> should.be_false
+  cnpj.validate("...///---...") |> should.be_false
+  cnpj.validate("**************") |> should.be_false
+}
+
+pub fn cnpj_validate_mixed_valid_invalid_chars_test() {
+  cnpj.validate("38@148#065$0001%51") |> should.be_true
+  cnpj.validate("38*148&065^0001!51") |> should.be_true
+}
+
+pub fn cnpj_validate_unicode_characters_test() {
+  cnpj.validate("38€148£065¥0001₹51") |> should.be_true
+  cnpj.validate("38🎉148🎈065🎊0001🎁51") |> should.be_true
+}
+
+pub fn cnpj_validate_almost_valid_cnpj_test() {
+  cnpj.validate("38.148.065/0001-52") |> should.be_false
+  cnpj.validate("38.148.065/0001-50") |> should.be_false
+  cnpj.validate("38.148.065/0000-51") |> should.be_false
+}
+
+pub fn cnpj_validate_single_char_test() {
+  cnpj.validate("1") |> should.be_false
+  cnpj.validate("a") |> should.be_false
+}
+
+pub fn cnpj_validate_exact_13_digits_test() {
+  cnpj.validate("3814806500015") |> should.be_false
+}
+
+pub fn cnpj_validate_exact_15_digits_test() {
+  cnpj.validate("381480650001511") |> should.be_false
+}
+
+pub fn cnpj_strip_empty_string_test() {
+  cnpj.strip("") |> should.equal(Error("Invalid CNPJ"))
+  cnpj.strip("   ") |> should.equal(Error("Invalid CNPJ"))
+}
+
+pub fn cnpj_format_empty_string_test() {
+  cnpj.format("") |> should.equal(Error("Invalid CNPJ"))
+  cnpj.format("   ") |> should.equal(Error("Invalid CNPJ"))
+}
+
+pub fn cnpj_strip_with_only_special_chars_test() {
+  cnpj.strip(".-./--") |> should.equal(Error("Invalid CNPJ"))
+  cnpj.strip("***") |> should.equal(Error("Invalid CNPJ"))
+}
+
+pub fn cnpj_format_with_only_special_chars_test() {
+  cnpj.format(".-./--") |> should.equal(Error("Invalid CNPJ"))
+  cnpj.format("***") |> should.equal(Error("Invalid CNPJ"))
+}
+
+pub fn validate_alphanumeric_with_lowercase_test() {
+  cnpj.validate("12abc34501de35") |> should.be_true
+  cnpj.validate("12.abc.345/01de-35") |> should.be_true
+}
+
+pub fn validate_alphanumeric_mixed_case_test() {
+  cnpj.validate("12AbC34501De35") |> should.be_true
+  cnpj.validate("aA345678000114") |> should.be_true
+}
+
+pub fn validate_alphanumeric_with_spaces_test() {
+  cnpj.validate("  12ABC34501DE35  ") |> should.be_true
+  cnpj.validate("12 ABC 345 01 DE 35") |> should.be_true
+}
+
+pub fn validate_alphanumeric_with_special_chars_test() {
+  cnpj.validate("12*ABC*345*01DE*35") |> should.be_true
+  cnpj.validate("AA@345@678@000@114") |> should.be_true
+}
+
+pub fn validate_alphanumeric_only_letters_test() {
+  cnpj.validate("ABCDEFGHIJKLMN") |> should.be_false
+  cnpj.validate("ABCDEFGHIJ0000") |> should.be_false
+}
+
+pub fn validate_alphanumeric_invalid_dv_test() {
+  cnpj.validate("12ABC34501DE99") |> should.be_false
+  cnpj.validate("12ABC34501DE00") |> should.be_false
+}
+
+pub fn validate_alphanumeric_too_short_test() {
+  cnpj.validate("12ABC345") |> should.be_false
+  cnpj.validate("AA34567800") |> should.be_false
+}
+
+pub fn validate_alphanumeric_too_long_test() {
+  cnpj.validate("12ABC34501DE35123") |> should.be_false
+  cnpj.validate("AA345678000114123") |> should.be_false
 }
 
 fn valid_cnpj_list() {

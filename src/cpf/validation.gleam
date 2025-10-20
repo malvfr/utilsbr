@@ -1,9 +1,10 @@
 import cpf/cleaner
 import gleam/int
 import gleam/list
-import gleam/regex
+import gleam/regexp
 import gleam/string
 import utils/format
+import utils/validation as utils_validation
 
 pub fn handle_flexible_validation(cpf: String) {
   let cleaned_cpf = cleaner.clean(cpf)
@@ -19,7 +20,7 @@ pub fn handle_flexible_validation(cpf: String) {
 pub fn handle_strict_validation(cpf: String) {
   let cpf_regex = format.unformatted_cpf_regex()
 
-  let is_regex_valid = regex.check(cpf_regex, cpf)
+  let is_regex_valid = regexp.check(cpf_regex, cpf)
 
   case is_regex_valid {
     True -> handle_flexible_validation(cpf)
@@ -35,8 +36,9 @@ fn handle_cleaned_cpf(cpf: String) {
 }
 
 fn calculate_verification_digits_and_validate(cpf: String) {
-  let first_nine_digits = string.slice(cpf, 0, 9) |> string.split("")
-  let last_two_digits = string.slice(cpf, 9, 11) |> string.split("")
+  let digits = string.to_graphemes(cpf)
+  let #(first_nine_digits, rest) = list.split(digits, 9)
+  let last_two_digits = list.take(rest, 2)
 
   let first_verification_digit =
     calculate_first_verification_digit(first_nine_digits)
@@ -45,14 +47,12 @@ fn calculate_verification_digits_and_validate(cpf: String) {
 
   let second_verification_digit =
     calculate_second_verification_digit(ten_digits)
-  let is_valid =
-    last_two_digits
-    == [
-      int.to_string(first_verification_digit),
-      int.to_string(second_verification_digit),
-    ]
 
-  is_valid
+  last_two_digits
+  == [
+    int.to_string(first_verification_digit),
+    int.to_string(second_verification_digit),
+  ]
 }
 
 pub fn calculate_first_verification_digit(first_nine_digits: List(String)) {
@@ -65,7 +65,7 @@ pub fn calculate_first_verification_digit(first_nine_digits: List(String)) {
 
   let last_sum_checker = sum % 11
 
-  calculate_verification_digit(last_sum_checker)
+  utils_validation.calculate_verification_digit_mod11(last_sum_checker)
 }
 
 pub fn calculate_second_verification_digit(ten_digits: List(String)) {
@@ -78,15 +78,5 @@ pub fn calculate_second_verification_digit(ten_digits: List(String)) {
 
   let last_sum_checker = sum % 11
 
-  calculate_verification_digit(last_sum_checker)
-}
-
-fn calculate_verification_digit(last_sum_checker: Int) {
-  let first_verification_digit = case last_sum_checker {
-    0 -> 0
-    1 -> 0
-    _ -> 11 - last_sum_checker
-  }
-
-  first_verification_digit
+  utils_validation.calculate_verification_digit_mod11(last_sum_checker)
 }

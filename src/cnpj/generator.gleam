@@ -16,11 +16,8 @@ import utils/format
 /// - (String): A valid CNPJ number, optionally formatted.
 pub fn generate(formatted: Bool) -> String {
   let first_twelve_digits =
-    list.fold(list.range(1, 12), "", fn(acc, _elm) {
-      let cnpj_str_digit = int.random(9) |> int.to_string()
-      string.append(acc, cnpj_str_digit)
-    })
-    |> string.split("")
+    list.range(1, 12)
+    |> list.map(fn(_) { int.random(9) |> int.to_string() })
 
   let first_validation_digit =
     validation.calculate_first_verification_digit(first_twelve_digits)

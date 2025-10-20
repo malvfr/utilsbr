@@ -1,26 +1,46 @@
+import cnpj/alphanumeric
 import cnpj/cleaner
 import gleam/int
-import gleam/iterator
 import gleam/list
-import gleam/regex
+import gleam/regexp
 import gleam/string
 import utils/format
+import utils/validation as utils_validation
+
+fn has_letters(str: String) -> Bool {
+  string.to_graphemes(str)
+  |> list.any(fn(char) {
+    case char {
+      "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "." | "-"
+      | "/" -> False
+      _ -> True
+    }
+  })
+}
 
 pub fn handle_flexible_validation(cnpj: String) {
-  let cleaned_cnpj = cleaner.clean(cnpj)
-
-  case string.length(cleaned_cnpj) {
-    14 -> {
-      handle_cleaned_cnpj(cleaned_cnpj)
+  case has_letters(cnpj) {
+    True -> {
+      let cleaned_cnpj = alphanumeric.clean_alphanumeric(cnpj)
+      case string.length(cleaned_cnpj) {
+        14 -> alphanumeric.validate_alphanumeric(cleaned_cnpj)
+        _ -> False
+      }
     }
-    _ -> False
+    False -> {
+      let cleaned_cnpj = cleaner.clean(cnpj)
+      case string.length(cleaned_cnpj) {
+        14 -> handle_cleaned_cnpj(cleaned_cnpj)
+        _ -> False
+      }
+    }
   }
 }
 
 pub fn handle_strict_validation(cnpj: String) {
   let cnpj_regex = format.unformatted_cnpj_regex()
 
-  let is_regex_valid = regex.check(cnpj_regex, cnpj)
+  let is_regex_valid = regexp.check(cnpj_regex, cnpj)
 
   case is_regex_valid {
     True -> handle_flexible_validation(cnpj)
@@ -36,8 +56,9 @@ fn handle_cleaned_cnpj(cnpj: String) {
 }
 
 fn calculate_verification_digits_and_validate(cnpj: String) {
-  let first_twelve_digits = string.slice(cnpj, 0, 12) |> string.split("")
-  let last_two_digits = string.slice(cnpj, 12, 14) |> string.split("")
+  let digits = string.to_graphemes(cnpj)
+  let #(first_twelve_digits, rest) = list.split(digits, 12)
+  let last_two_digits = list.take(rest, 2)
 
   let first_verification_digit =
     calculate_first_verification_digit(first_twelve_digits)
@@ -48,56 +69,41 @@ fn calculate_verification_digits_and_validate(cnpj: String) {
   let second_verification_digit =
     calculate_second_verification_digit(thirteen_digits)
 
-  let is_valid =
-    last_two_digits
-    == [
-      int.to_string(first_verification_digit),
-      int.to_string(second_verification_digit),
-    ]
-
-  is_valid
+  last_two_digits
+  == [
+    int.to_string(first_verification_digit),
+    int.to_string(second_verification_digit),
+  ]
 }
 
 pub fn calculate_first_verification_digit(first_twelve_digits: List(String)) {
   let verifying_digits = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
 
   let sum =
-    list.index_fold(first_twelve_digits, 0, fn(acc, elm, index) {
+    list.zip(first_twelve_digits, verifying_digits)
+    |> list.fold(0, fn(acc, pair) {
+      let #(elm, verifying_digit) = pair
       let assert Ok(digit) = int.parse(elm)
-      let assert Ok(verifying_digit) =
-        iterator.at(iterator.from_list(verifying_digits), index)
-
-      acc + { digit * verifying_digit }
+      acc + digit * verifying_digit
     })
 
   let last_sum_checker = sum % 11
 
-  calculate_verification_digit(last_sum_checker)
+  utils_validation.calculate_verification_digit_mod11(last_sum_checker)
 }
 
 pub fn calculate_second_verification_digit(thirteen_digits: List(String)) {
   let verifying_digits = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
 
   let sum =
-    list.index_fold(thirteen_digits, 0, fn(acc, elm, index) {
+    list.zip(thirteen_digits, verifying_digits)
+    |> list.fold(0, fn(acc, pair) {
+      let #(elm, verifying_digit) = pair
       let assert Ok(digit) = int.parse(elm)
-      let assert Ok(verifying_digit) =
-        iterator.at(iterator.from_list(verifying_digits), index)
-
-      acc + { digit * verifying_digit }
+      acc + digit * verifying_digit
     })
 
   let last_sum_checker = sum % 11
 
-  calculate_verification_digit(last_sum_checker)
-}
-
-fn calculate_verification_digit(last_sum_checker: Int) {
-  let first_verification_digit = case last_sum_checker {
-    0 -> 0
-    1 -> 0
-    _ -> 11 - last_sum_checker
-  }
-
-  first_verification_digit
+  utils_validation.calculate_verification_digit_mod11(last_sum_checker)
 }
