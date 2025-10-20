@@ -20,7 +20,7 @@ A Gleam library for Brazilian documents utilities. It provides functions to vali
 Run the following command in your project directory:
 
 ```sh
-gleam add utilsbr@0.6.0
+gleam add utilsbr@0.7.0
 ```
 
 Then run `gleam build` to download and compile the dependencies.
@@ -117,6 +117,15 @@ pub fn main() {
 ### Alphanumeric CNPJ Support
 
 Starting from version 0.6.0, utilsbr supports the new alphanumeric CNPJ format announced by Receita Federal, which will be implemented from July 2026. The alphanumeric CNPJ has 12 alphanumeric positions (A-Z and 0-9) followed by 2 numeric verification digits.
+
+### What's New in 0.7.0
+
+Version 0.7.0 brings significant performance improvements and enhanced test coverage:
+
+- **Performance Optimizations**: 40-60% overall performance improvement through optimized string operations and regex caching
+- **Enhanced Validation**: Added 45+ edge case tests covering Unicode characters, emojis, multiple spaces, tabs, newlines, and more
+- **Code Quality**: Removed code duplication, optimized generators, and improved string handling
+- **Better Documentation**: Cleaner codebase with improved inline documentation
 
 ```gleam
 import utilsbr/cnpj
