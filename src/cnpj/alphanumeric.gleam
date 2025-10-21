@@ -1,29 +1,6 @@
 import gleam/int
 import gleam/list
-import gleam/regexp
 import gleam/string
-
-/// Detects if a CNPJ is alphanumeric (contains letters) or purely numeric.
-///
-/// Returns True if the CNPJ contains at least one letter in the first 12 positions.
-pub fn is_alphanumeric(cnpj: String) -> Bool {
-  let first_twelve = string.slice(cnpj, 0, 12)
-  let assert Ok(letter_regex) =
-    regexp.compile("[A-Z]", regexp.Options(False, False))
-  regexp.check(letter_regex, first_twelve)
-}
-
-/// Cleans an alphanumeric CNPJ by removing formatting characters but keeping letters and numbers.
-///
-/// This function removes all non-alphanumeric characters except letters (A-Z) and digits (0-9).
-pub fn clean_alphanumeric(cnpj: String) -> String {
-  let assert Ok(valid_chars_regex) =
-    regexp.compile("[^A-Z0-9]", regexp.Options(False, False))
-
-  cnpj
-  |> string.uppercase
-  |> regexp.replace(each: valid_chars_regex, with: "")
-}
 
 /// Converts a character (letter or digit) to its ASCII value minus 48.
 ///
@@ -40,11 +17,7 @@ fn char_to_value(char: String) -> Result(Int, Nil) {
   }
 }
 
-/// Calculates the first verification digit for an alphanumeric CNPJ.
-///
-/// Uses the modulo 11 algorithm with weights [5,4,3,2,9,8,7,6,5,4,3,2]
-/// and ASCII values minus 48 for each character.
-pub fn calculate_first_verification_digit_alphanumeric(
+fn calculate_first_verification_digit_alphanumeric(
   first_twelve_chars: List(String),
 ) -> Result(Int, Nil) {
   let verifying_digits = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
@@ -68,11 +41,7 @@ pub fn calculate_first_verification_digit_alphanumeric(
   }
 }
 
-/// Calculates the second verification digit for an alphanumeric CNPJ.
-///
-/// Uses the modulo 11 algorithm with weights [6,5,4,3,2,9,8,7,6,5,4,3,2]
-/// and ASCII values minus 48 for each character.
-pub fn calculate_second_verification_digit_alphanumeric(
+fn calculate_second_verification_digit_alphanumeric(
   thirteen_chars: List(String),
 ) -> Result(Int, Nil) {
   let verifying_digits = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
@@ -143,17 +112,4 @@ fn validate_alphanumeric_structure(cnpj: String) -> Bool {
     }
     _, _, _ -> False
   }
-}
-
-/// Formats an alphanumeric CNPJ string into the standard format: AA.AAA.AAA/AAAA-DV
-///
-/// Example: "12ABC34501DE35" -> "12.ABC.345/01DE-35"
-pub fn format_alphanumeric(cnpj: String) -> String {
-  let part1 = string.slice(cnpj, 0, 2)
-  let part2 = string.slice(cnpj, 2, 3)
-  let part3 = string.slice(cnpj, 5, 3)
-  let part4 = string.slice(cnpj, 8, 4)
-  let part5 = string.slice(cnpj, 12, 2)
-
-  part1 <> "." <> part2 <> "." <> part3 <> "/" <> part4 <> "-" <> part5
 }

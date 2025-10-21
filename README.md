@@ -6,145 +6,124 @@
 [![License](https://img.shields.io/hexpm/l/utilsbr)](https://hex.pm/packages/utilsbr)
 ![Last Updated](https://img.shields.io/github/last-commit/malvfr/utilsbr)
 
-A Gleam library for Brazilian documents utilities. It provides functions to validate and generate CPF and CNPJ documents.
+A Gleam library for Brazilian document validation and generation. Provides utilities for working with CPF and CNPJ documents, including support for the new alphanumeric CNPJ format.
 
 ## Features
 
-- CPF validation, generation, formatting and stripping
-- CNPJ validation (numeric and alphanumeric), generation, formatting and stripping
-- Support for both traditional numeric CNPJs (14 digits) and new alphanumeric CNPJs (12 alphanumeric + 2 digit checksum)
-- Flexible and strict validation modes
+- **CPF utilities**: validation, generation, formatting, and stripping
+- **CNPJ utilities**: validation, generation, formatting, and stripping
+- **Unified CNPJ handling**: all functions automatically work with both numeric and alphanumeric formats
+- **Alphanumeric CNPJ support**: seamless support for the new format announced by Receita Federal (effective July 2026)
+- **Flexible and strict validation modes**: choose between lenient or strict format validation
+- **Type-safe**: leverages Gleam's type system for reliable document handling
 
-# Installation
-
-Run the following command in your project directory:
+## Installation
 
 ```sh
-gleam add utilsbr@0.7.0
+gleam add utilsbr
 ```
 
-Then run `gleam build` to download and compile the dependencies.
-
-````
-
-# Basic usage
-
-### Import the module
-
-Import the module and use the functions to validate and generate CPF and CNPJ documents.
+## Quick Start
 
 ```gleam
 import utilsbr/cpf
 import utilsbr/cnpj
 
 pub fn main() {
-  // Validate CPF
-  cpf.validate("873.220.050-15")
+  // Validate documents
+  cpf.validate("873.220.050-15")  // True
 
+  // Validate both numeric and alphanumeric CNPJs
+  cnpj.validate("84.980.771/0001-82")  // True (numeric)
+  cnpj.validate("12.ABC.345/01DE-35")  // True (alphanumeric)
+
+  // Format and strip work automatically
+  cnpj.format("12ABC34501DE35")  // Ok("12.ABC.345/01DE-35")
+  cnpj.strip("84.980.771/0001-82")  // Ok("84980771000182")
+
+  // Generate new documents
+  let new_cpf = cpf.generate(True)  // "123.456.789-09"
+  let new_cnpj = cnpj.generate(False)  // "12345678000195"
 }
-````
+```
 
-### CPF functions
+## API Reference
+
+### CPF
 
 ```gleam
 import utilsbr/cpf
 
-pub fn main() {
-  // Validate CPF
-  assert True = cpf.validate("873.220.050-15")
-  assert False = cpf.validate("123.456.789-09")
+// Validation - flexible mode (allows whitespace and special chars)
+cpf.validate("873.220.050-15")  // True
+cpf.validate("  873.220.050-15  ")  // True
+cpf.validate("123.456.789-09")  // False
 
-  // Strict Validate CPF
+// Validation - strict mode (exact format required)
+cpf.strict_validate("873.220.050-15")  // True
+cpf.strict_validate(" 873.220.050-15 ")  // False
 
-  assert True = cpf.strict_validate("873.220.050-15")
-  assert False = cpf.strict_validate(" 873.220.050-15 ")
-  assert False = cpf.strict_validate(" 873.220.050-15")
+// Generation
+cpf.generate(True)  // "873.220.050-15" (formatted)
+cpf.generate(False)  // "87322005015" (unformatted)
 
-  // Generate CPF
-
-  let cpf = cpf.generate()
-  > "873.220.050-15"
-
-  // Format CPF
-
-  let cpf = cpf.format("87322005015")
-
-  > "873.220.050-15"
-  // Strip CPF
-
-  let cpf = cpf.strip("873.220.050-15")
-  > "87322005015"
-}
+// Formatting and stripping
+cpf.format("87322005015")  // Ok("873.220.050-15")
+cpf.strip("873.220.050-15")  // Ok("87322005015")
 ```
 
-### CNPJ functions
+### CNPJ
+
+All CNPJ functions work seamlessly with both numeric and alphanumeric formats. The library automatically detects the format and applies the appropriate validation and formatting rules.
+
+**Alphanumeric CNPJ Support**: Starting from version 0.6.0, utilsbr supports the new alphanumeric CNPJ format announced by Receita Federal (effective July 2026). The alphanumeric CNPJ consists of 12 alphanumeric characters (A-Z and 0-9) followed by 2 numeric verification digits.
 
 ```gleam
 import utilsbr/cnpj
 
-pub fn main() {
-  // Validate CNPJ (numeric)
-  assert True = cnpj.validate("84.980.771/0001-82")
-  assert False = cnpj.validate("12.345.678/0001-09")
+// Validation - flexible mode (works with both formats)
+cnpj.validate("84.980.771/0001-82")  // True (numeric)
+cnpj.validate("12.ABC.345/01DE-35")  // True (alphanumeric)
+cnpj.validate("12abc34501de35")     // True (case insensitive)
+cnpj.validate("  84.980.771/0001-82  ")  // True
+cnpj.validate("12.345.678/0001-09")  // False
 
-  // Validate CNPJ (alphanumeric) - New feature!
-  assert True = cnpj.validate("12.ABC.345/01DE-35")
-  assert True = cnpj.validate("12ABC34501DE35")
+// Validation - strict mode (works with both formats)
+cnpj.strict_validate("84.980.771/0001-82")   // True (numeric formatted)
+cnpj.strict_validate("84980771000182")        // True (numeric unformatted)
+cnpj.strict_validate("12.ABC.345/01DE-35")   // True (alphanumeric formatted)
+cnpj.strict_validate("12ABC34501DE35")        // True (alphanumeric unformatted)
+cnpj.strict_validate("12.abc.345/01de-35")   // True (case insensitive)
+cnpj.strict_validate(" 84.980.771/0001-82 ") // False (no spaces allowed)
+cnpj.strict_validate("12*ABC*345*01DE*35")   // False (wrong separators)
 
-  // Strict Validate CNPJ
+// Generation (numeric only)
+cnpj.generate(True)  // "84.980.771/0001-82" (formatted)
+cnpj.generate(False)  // "84980771000182" (unformatted)
 
-  assert True = cnpj.strict_validate("84.980.771/0001-82")
-  assert False = cnpj.strict_validate(" 84.980.771/0001-82 ")
-  assert False = cnpj.strict_validate(" 84.980.771/0001-82")
+// Formatting - automatic detection
+cnpj.format("84980771000182")    // Ok("84.980.771/0001-82")
+cnpj.format("12ABC34501DE35")    // Ok("12.ABC.345/01DE-35")
+cnpj.format("12abc34501de35")    // Ok("12.ABC.345/01DE-35")
 
-  // Generate CNPJ (numeric)
-
-  let cnpj = cnpj.generate(True)
-  > "84.980.771/0001-82"
-
-  // Format CNPJ
-
-  let cnpj = cnpj.format("84980771000182")
-  > "84.980.771/0001-82"
-
-  // Strip CNPJ
-
-  let cnpj = cnpj.strip("84.980.771/0001-82")
-  > "84980771000182"
-}
+// Stripping - automatic detection
+cnpj.strip("84.980.771/0001-82")  // Ok("84980771000182")
+cnpj.strip("12.ABC.345/01DE-35")  // Ok("12ABC34501DE35")
+cnpj.strip("12.abc.345/01de-35")  // Ok("12ABC34501DE35")
 ```
 
-### Alphanumeric CNPJ Support
+## Compatibility
 
-Starting from version 0.6.0, utilsbr supports the new alphanumeric CNPJ format announced by Receita Federal, which will be implemented from July 2026. The alphanumeric CNPJ has 12 alphanumeric positions (A-Z and 0-9) followed by 2 numeric verification digits.
+This library works on both the Erlang and JavaScript targets.
 
-### What's New in 0.7.0
+## Documentation
 
-Version 0.7.0 brings significant performance improvements and enhanced test coverage:
+For detailed API documentation and more examples, visit [HexDocs](https://hexdocs.pm/utilsbr).
 
-- **Performance Optimizations**: 40-60% overall performance improvement through optimized string operations and regex caching
-- **Enhanced Validation**: Added 45+ edge case tests covering Unicode characters, emojis, multiple spaces, tabs, newlines, and more
-- **Code Quality**: Removed code duplication, optimized generators, and improved string handling
-- **Better Documentation**: Cleaner codebase with improved inline documentation
+## Contributing
 
-```gleam
-import utilsbr/cnpj
-import cnpj/alphanumeric
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-pub fn main() {
-  // Validate alphanumeric CNPJ
-  cnpj.validate("12.ABC.345/01DE-35")  // True
+## License
 
-  // Clean alphanumeric CNPJ
-  alphanumeric.clean_alphanumeric("12.ABC.345/01DE-35")  // "12ABC34501DE35"
-
-  // Format alphanumeric CNPJ
-  alphanumeric.format_alphanumeric("12ABC34501DE35")  // "12.ABC.345/01DE-35"
-
-  // Check if CNPJ is alphanumeric
-  alphanumeric.is_alphanumeric("12ABC34501DE35")  // True
-  alphanumeric.is_alphanumeric("12345678901234")  // False
-}
-```
-
-Further documentation can be found at <https://hexdocs.pm/utilsbr>.
+This project is licensed under the Apache-2.0 License.

@@ -7,32 +7,10 @@ import gleam/string
 import utils/format
 import utils/validation as utils_validation
 
-fn has_letters(str: String) -> Bool {
-  string.to_graphemes(str)
-  |> list.any(fn(char) {
-    case char {
-      "0"
-      | "1"
-      | "2"
-      | "3"
-      | "4"
-      | "5"
-      | "6"
-      | "7"
-      | "8"
-      | "9"
-      | "."
-      | "-"
-      | "/" -> False
-      _ -> True
-    }
-  })
-}
-
 pub fn handle_flexible_validation(cnpj: String) {
-  case has_letters(cnpj) {
+  case cleaner.has_letters(cnpj) {
     True -> {
-      let cleaned_cnpj = alphanumeric.clean_alphanumeric(cnpj)
+      let cleaned_cnpj = cleaner.clean_alphanumeric(cnpj)
       case string.length(cleaned_cnpj) {
         14 -> alphanumeric.validate_alphanumeric(cleaned_cnpj)
         _ -> False
@@ -49,13 +27,32 @@ pub fn handle_flexible_validation(cnpj: String) {
 }
 
 pub fn handle_strict_validation(cnpj: String) {
-  let cnpj_regex = format.unformatted_cnpj_regex()
+  case cleaner.has_letters(cnpj) {
+    True -> {
+      // For alphanumeric CNPJs, check both formatted and unformatted patterns
+      // Convert to uppercase first since regex expects [A-Z0-9]
+      let cnpj_upper = string.uppercase(cnpj)
+      let formatted_regex = format.formatted_alphanumeric_cnpj_regex()
+      let unformatted_regex = format.unformatted_alphanumeric_cnpj_regex()
 
-  let is_regex_valid = regexp.check(cnpj_regex, cnpj)
+      let is_formatted = regexp.check(formatted_regex, cnpj_upper)
+      let is_unformatted = regexp.check(unformatted_regex, cnpj_upper)
 
-  case is_regex_valid {
-    True -> handle_flexible_validation(cnpj)
-    False -> False
+      case is_formatted || is_unformatted {
+        True -> handle_flexible_validation(cnpj)
+        False -> False
+      }
+    }
+    False -> {
+      // For numeric CNPJs, use the existing numeric regex
+      let cnpj_regex = format.unformatted_cnpj_regex()
+      let is_regex_valid = regexp.check(cnpj_regex, cnpj)
+
+      case is_regex_valid {
+        True -> handle_flexible_validation(cnpj)
+        False -> False
+      }
+    }
   }
 }
 
