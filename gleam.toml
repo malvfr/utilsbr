@@ -1,5 +1,5 @@
 name = "utilsbr"
-version = "0.7.0"
+version = "0.9.0"
 gleam = ">= 1.11.0"
 
 description = "A simple brazilian documents such as CPF and CNPJ utilities library"
