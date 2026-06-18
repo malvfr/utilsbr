@@ -1,10 +1,10 @@
-import cpf/cleaner
 import gleam/int
 import gleam/list
 import gleam/regexp
 import gleam/string
-import utils/format
-import utils/validation as utils_validation
+import utilsbr/cpf/cleaner
+import utilsbr/utils/format
+import utilsbr/utils/validation as utils_validation
 
 pub fn handle_flexible_validation(cpf: String) {
   let cleaned_cpf = cleaner.clean(cpf)

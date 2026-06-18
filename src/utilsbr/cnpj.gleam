@@ -1,6 +1,6 @@
-import cnpj/cleaner
-import cnpj/generator
-import cnpj/validation
+import utilsbr/cnpj/cleaner
+import utilsbr/cnpj/generator
+import utilsbr/cnpj/validation
 
 const invalid_cnpj_message = "Invalid CNPJ"
 

@@ -1,8 +1,8 @@
-import cpf/validation
 import gleam/int
 import gleam/list
 import gleam/string
-import utils/format
+import utilsbr/cpf/validation
+import utilsbr/utils/format
 
 /// Generates a Brazilian CPF (Cadastro de Pessoas Físicas) number.
 /// 
@@ -18,8 +18,8 @@ import utils/format
 /// - `String`: The generated CPF number, optionally formatted.
 pub fn generate(formatted: Bool) -> String {
   let first_nine_digits =
-    list.range(1, 9)
-    |> list.map(fn(_) { int.random(9) |> int.to_string() })
+    list.repeat(0, 9)
+    |> list.map(fn(_) { int.random(10) |> int.to_string() })
 
   let first_validation_digit =
     validation.calculate_first_verification_digit(first_nine_digits)

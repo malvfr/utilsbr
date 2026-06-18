@@ -1,18 +1,26 @@
-import cnpj/alphanumeric
-import cnpj/cleaner
 import gleam/int
 import gleam/list
 import gleam/regexp
 import gleam/string
-import utils/format
-import utils/validation as utils_validation
+import utilsbr/cnpj/alphanumeric
+import utilsbr/cnpj/cleaner
+import utilsbr/utils/format
+import utilsbr/utils/validation as utils_validation
 
 pub fn handle_flexible_validation(cnpj: String) {
   case cleaner.has_letters(cnpj) {
     True -> {
       let cleaned_cnpj = cleaner.clean_alphanumeric(cnpj)
       case string.length(cleaned_cnpj) {
-        14 -> alphanumeric.validate_alphanumeric(cleaned_cnpj)
+        // Reject sequences where every character is identical (e.g. all
+        // zeros). Without this guard, "00 000 000 0000 00" would clean to
+        // "00000000000000", whose check digits are 0/0, and validate as true
+        // even though the numeric path correctly rejects the same value.
+        14 ->
+          case format.all_characteres_are_equal(cleaned_cnpj) {
+            True -> False
+            False -> alphanumeric.validate_alphanumeric(cleaned_cnpj)
+          }
         _ -> False
       }
     }

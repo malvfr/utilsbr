@@ -1,8 +1,8 @@
-import cnpj/validation
 import gleam/int
 import gleam/list
 import gleam/string
-import utils/format
+import utilsbr/cnpj/validation
+import utilsbr/utils/format
 
 /// Generates a CNPJ (Cadastro Nacional da Pessoa Jurídica) number.
 /// 
@@ -16,8 +16,8 @@ import utils/format
 /// - (String): A valid CNPJ number, optionally formatted.
 pub fn generate(formatted: Bool) -> String {
   let first_twelve_digits =
-    list.range(1, 12)
-    |> list.map(fn(_) { int.random(9) |> int.to_string() })
+    list.repeat(0, 12)
+    |> list.map(fn(_) { int.random(10) |> int.to_string() })
 
   let first_validation_digit =
     validation.calculate_first_verification_digit(first_twelve_digits)

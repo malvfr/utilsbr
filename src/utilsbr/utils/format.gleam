@@ -2,69 +2,10 @@ import gleam/list
 import gleam/regexp
 import gleam/string
 
-/// Cache structure to hold precompiled regular expressions
-/// This improves performance by avoiding recompilation on every validation
-pub type RegexCache {
-  RegexCache(
-    formatted_cpf: regexp.Regexp,
-    unformatted_cpf: regexp.Regexp,
-    formatted_cnpj: regexp.Regexp,
-    unformatted_cnpj: regexp.Regexp,
-    formatted_alphanumeric_cnpj: regexp.Regexp,
-    unformatted_alphanumeric_cnpj: regexp.Regexp,
-  )
-}
-
-/// Build a cache with all precompiled regular expressions
-/// This should be called once and reused for multiple validations
-pub fn build_regex_cache() -> RegexCache {
-  let assert Ok(formatted_cpf) =
-    regexp.compile(
-      "^[0-9]{3}.[0-9]{3}.[0-9]{3}-[0-9]{2}$",
-      regexp.Options(False, False),
-    )
-
-  let assert Ok(unformatted_cpf) =
-    regexp.compile(
-      "^[0-9]{3}\\.?[0-9]{3}\\.?[0-9]{3}\\-?[0-9]{2}$",
-      regexp.Options(False, False),
-    )
-
-  let assert Ok(unformatted_cnpj) =
-    regexp.compile(
-      "^\\d{2}\\.?\\d{3}\\.?\\d{3}/?\\d{4}-?\\d{2}$",
-      regexp.Options(False, False),
-    )
-
-  let assert Ok(formatted_cnpj) =
-    regexp.compile(
-      "^\\d{2}.\\d{3}.\\d{3}/\\d{4}-\\d{2}$",
-      regexp.Options(False, False),
-    )
-
-  let assert Ok(formatted_alphanumeric_cnpj) =
-    regexp.compile(
-      "^[A-Z0-9]{2}\\.[A-Z0-9]{3}\\.[A-Z0-9]{3}/[A-Z0-9]{4}-[0-9]{2}$",
-      regexp.Options(False, False),
-    )
-
-  let assert Ok(unformatted_alphanumeric_cnpj) =
-    regexp.compile("^[A-Z0-9]{12}[0-9]{2}$", regexp.Options(False, False))
-
-  RegexCache(
-    formatted_cpf: formatted_cpf,
-    unformatted_cpf: unformatted_cpf,
-    formatted_cnpj: formatted_cnpj,
-    unformatted_cnpj: unformatted_cnpj,
-    formatted_alphanumeric_cnpj: formatted_alphanumeric_cnpj,
-    unformatted_alphanumeric_cnpj: unformatted_alphanumeric_cnpj,
-  )
-}
-
 pub fn formatted_cpf_regex() -> regexp.Regexp {
   let assert Ok(cpf_regex) =
     regexp.compile(
-      "^[0-9]{3}.[0-9]{3}.[0-9]{3}-[0-9]{2}$",
+      "^[0-9]{3}\\.[0-9]{3}\\.[0-9]{3}-[0-9]{2}$",
       regexp.Options(False, False),
     )
 
@@ -72,9 +13,12 @@ pub fn formatted_cpf_regex() -> regexp.Regexp {
 }
 
 pub fn unformatted_cpf_regex() -> regexp.Regexp {
+  // Note: the hyphen is written literally (`-?`), not escaped (`\-?`). Under
+  // the JavaScript target's unicode regex mode, `\-` outside a character class
+  // is an "Invalid escape" and fails to compile, breaking the JS target.
   let assert Ok(unfomatted_cpf_regex) =
     regexp.compile(
-      "^[0-9]{3}\\.?[0-9]{3}\\.?[0-9]{3}\\-?[0-9]{2}$",
+      "^[0-9]{3}\\.?[0-9]{3}\\.?[0-9]{3}-?[0-9]{2}$",
       regexp.Options(False, False),
     )
 
@@ -93,7 +37,7 @@ pub fn unformatted_cnpj_regex() -> regexp.Regexp {
 pub fn formatted_cnpj_regex() -> regexp.Regexp {
   let assert Ok(formatted_cnpj_regex) =
     regexp.compile(
-      "^\\d{2}.\\d{3}.\\d{3}/\\d{4}-\\d{2}$",
+      "^\\d{2}\\.\\d{3}\\.\\d{3}/\\d{4}-\\d{2}$",
       regexp.Options(False, False),
     )
   formatted_cnpj_regex
