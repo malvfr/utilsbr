@@ -1,8 +1,9 @@
-import cpf/cpf
 import gleam/list
 import gleam/regexp
+import gleam/string
 import gleeunit/should
-import utils/format
+import utilsbr/cpf
+import utilsbr/utils/format
 
 pub fn validate_same_digits_test() {
   cpf.validate("00000000000") |> should.be_false
@@ -82,7 +83,7 @@ pub fn strict_validate_test() {
 }
 
 pub fn generate_unformatted_cpf_test() {
-  list.range(1, 100_000)
+  list.repeat(0, 100_000)
   |> list.each(fn(_) {
     let cpf_string = cpf.generate(False)
     cpf.validate(cpf_string) |> should.be_true
@@ -92,7 +93,7 @@ pub fn generate_unformatted_cpf_test() {
 }
 
 pub fn generate_formatted_cpf_test() {
-  list.range(1, 100_000)
+  list.repeat(0, 100_000)
   |> list.each(fn(_) {
     let cpf_string = cpf.generate(True)
     cpf.validate(cpf_string) |> should.be_true
@@ -226,6 +227,62 @@ pub fn strip_with_only_special_chars_test() {
 pub fn format_with_only_special_chars_test() {
   cpf.format(".-.-.-") |> should.equal(Error("Invalid CPF"))
   cpf.format("***") |> should.equal(Error("Invalid CPF"))
+}
+
+/// Regression test: the random body digits must be able to contain a 9.
+/// A previous bug used `int.random(9)` (range 0..8), so the digit 9 never
+/// appeared in the randomly generated portion of a CPF.
+pub fn generate_cpf_body_can_contain_nine_test() {
+  let bodies =
+    list.repeat(0, 2000)
+    |> list.map(fn(_) { cpf.generate(False) |> string.slice(0, 9) })
+    |> string.join("")
+
+  string.contains(bodies, "9") |> should.be_true
+}
+
+/// The generator must not keep emitting the same value.
+pub fn generate_cpf_produces_varied_values_test() {
+  let docs = list.repeat(0, 100) |> list.map(fn(_) { cpf.generate(False) })
+  { list.unique(docs) |> list.length > 1 } |> should.be_true
+}
+
+/// Every generated CPF round-trips losslessly through format and strip.
+pub fn format_strip_roundtrip_cpf_test() {
+  list.repeat(0, 1000)
+  |> list.each(fn(_) {
+    let unformatted = cpf.generate(False)
+    let assert Ok(formatted) = cpf.format(unformatted)
+    cpf.strip(formatted) |> should.equal(Ok(unformatted))
+    cpf.strict_validate(formatted) |> should.be_true
+  })
+}
+
+/// All-identical CPFs must be rejected regardless of the separators used,
+/// since cleaning always reduces them to the same repeated digit string.
+pub fn validate_repeated_digits_with_separators_test() {
+  cpf.validate("000 000 000 00") |> should.be_false
+  cpf.validate("111*111*111*11") |> should.be_false
+  cpf.validate("999\t999\t999\t99") |> should.be_false
+  cpf.validate("  00000000000  ") |> should.be_false
+}
+
+/// The exact examples shown in the README must work as documented.
+pub fn readme_examples_test() {
+  cpf.validate("873.220.050-15") |> should.be_true
+  cpf.strict_validate("873.220.050-15") |> should.be_true
+  cpf.format("87322005015") |> should.equal(Ok("873.220.050-15"))
+  cpf.strip("873.220.050-15") |> should.equal(Ok("87322005015"))
+}
+
+/// Boundary check digits: remainder <= 1 yields a check digit of 0.
+pub fn validate_check_digit_zero_cases_test() {
+  // Both verification digits resolve to 0.
+  cpf.validate("133.314.421-00") |> should.be_true
+  // First verifier 0, second non-zero.
+  cpf.validate("034.224.826-01") |> should.be_true
+  // Second verifier 0, first non-zero.
+  cpf.validate("161.803.571-10") |> should.be_true
 }
 
 fn valid_cpf_list() {

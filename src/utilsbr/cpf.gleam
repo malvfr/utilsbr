@@ -1,7 +1,7 @@
-import cpf/cleaner
-import cpf/generator
-import cpf/validation
-import utils/format
+import utilsbr/cpf/cleaner
+import utilsbr/cpf/generator
+import utilsbr/cpf/validation
+import utilsbr/utils/format
 
 const invalid_cpf_message = "Invalid CPF"
 

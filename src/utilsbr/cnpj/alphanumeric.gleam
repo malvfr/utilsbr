@@ -87,7 +87,7 @@ pub fn validate_alphanumeric(cnpj: String) -> Bool {
 }
 
 fn validate_alphanumeric_structure(cnpj: String) -> Bool {
-  let first_twelve = string.slice(cnpj, 0, 12) |> string.split("")
+  let first_twelve = string.slice(cnpj, 0, 12) |> string.to_graphemes
   let last_two = string.slice(cnpj, 12, 2)
 
   case

@@ -1,8 +1,9 @@
-import cnpj/cnpj
 import gleam/list
 import gleam/regexp
+import gleam/string
 import gleeunit/should
-import utils/format
+import utilsbr/cnpj
+import utilsbr/utils/format
 
 pub fn cnpj_validate_same_digits_test() {
   cnpj.validate("00.000.000/0000-00") |> should.be_false
@@ -86,7 +87,7 @@ pub fn strict_validate_numeric_cnpj_test() {
 }
 
 pub fn generate_unformatted_cnpj_test() {
-  list.range(1, 100_000)
+  list.repeat(0, 100_000)
   |> list.each(fn(_) {
     let cnpj_string = cnpj.generate(False)
     cnpj.validate(cnpj_string) |> should.be_true
@@ -96,7 +97,7 @@ pub fn generate_unformatted_cnpj_test() {
 }
 
 pub fn generate_formatted_cnpj_test() {
-  list.range(1, 100_000)
+  list.repeat(0, 100_000)
   |> list.each(fn(_) {
     let cnpj_string = cnpj.generate(True)
     cnpj.validate(cnpj_string) |> should.be_true
@@ -436,6 +437,112 @@ pub fn validate_alphanumeric_mixed_format_test() {
   cnpj.validate("12.ABC34501DE-35") |> should.be_true
   cnpj.validate("12ABC.345/01DE35") |> should.be_true
   cnpj.validate("AA345.678.0001.14") |> should.be_true
+}
+
+/// Ground-truth vectors covering the full letter range (A=17 .. Z=42),
+/// brute-forced against and consistent with the Receita Federal mod-11
+/// algorithm. These exercise letters the existing fixtures never reach.
+pub fn validate_alphanumeric_full_letter_range_test() {
+  cnpj.validate("ZZZZZZZZZZZZ62") |> should.be_true
+  cnpj.validate("ABCDEFGHIJKL80") |> should.be_true
+  cnpj.validate("1A2B3C4D5E6F34") |> should.be_true
+  cnpj.validate("Z9Z9Z9Z9Z9Z962") |> should.be_true
+
+  // Formatted and lowercase variants of the same values.
+  cnpj.validate("ZZ.ZZZ.ZZZ/ZZZZ-62") |> should.be_true
+  cnpj.validate("abcdefghijkl80") |> should.be_true
+  cnpj.validate("1a2b3c4d5e6f34") |> should.be_true
+}
+
+/// Off-by-one on either check digit must fail across the full letter range.
+pub fn validate_alphanumeric_wrong_dv_full_range_test() {
+  cnpj.validate("ZZZZZZZZZZZZ61") |> should.be_false
+  cnpj.validate("ZZZZZZZZZZZZ63") |> should.be_false
+  cnpj.validate("ABCDEFGHIJKL79") |> should.be_false
+  cnpj.validate("ABCDEFGHIJKL81") |> should.be_false
+  cnpj.validate("1A2B3C4D5E6F33") |> should.be_false
+  cnpj.validate("1A2B3C4D5E6F35") |> should.be_false
+}
+
+/// Regression: an all-identical sequence must be rejected regardless of the
+/// separators used. A space (or any non `.`/`-`/`/` character) used to route
+/// the value through the alphanumeric path, which skipped the all-identical
+/// check and wrongly accepted "00000000000000".
+pub fn validate_repeated_zeros_with_separators_test() {
+  cnpj.validate("00.000.000/0000-00") |> should.be_false
+  cnpj.validate("00000000000000") |> should.be_false
+  cnpj.validate("00 000 000 0000 00") |> should.be_false
+  cnpj.validate("00*000*000*0000*00") |> should.be_false
+  cnpj.validate("00@000@000@0000@00") |> should.be_false
+  cnpj.validate("00\t000\t000\t0000\t00") |> should.be_false
+  cnpj.validate("  00000000000000  ") |> should.be_false
+}
+
+/// Only an all-identical 14-character value is rejected. A repeated base with
+/// correct numeric check digits is mathematically valid per Receita Federal
+/// (the alphanumeric spec performs pure mod-11 validation, no pattern
+/// exclusion), mirroring how a numeric CNPJ that merely repeats most digits is
+/// still valid.
+pub fn validate_repeated_base_with_valid_dv_test() {
+  cnpj.validate("AAAAAAAAAAAA45") |> should.be_true
+  cnpj.validate("AA.AAA.AAA/AAAA-45") |> should.be_true
+  cnpj.validate("ZZZZZZZZZZZZ62") |> should.be_true
+}
+
+/// The two check-digit positions must be numeric.
+pub fn validate_alphanumeric_letter_in_dv_position_test() {
+  cnpj.validate("12ABC34501DEA5") |> should.be_false
+  cnpj.validate("12ABC34501DE5A") |> should.be_false
+  cnpj.validate("ABCDEFGHIJKL8O") |> should.be_false
+  cnpj.validate("ABCDEFGHIJKLO0") |> should.be_false
+}
+
+/// Alphanumeric values of the wrong length are rejected.
+pub fn validate_alphanumeric_boundary_lengths_test() {
+  cnpj.validate("ABCDEFGHIJKL8") |> should.be_false
+  cnpj.validate("ABCDEFGHIJKL800") |> should.be_false
+  cnpj.validate("ABCDEFGHIJK80") |> should.be_false
+  cnpj.validate("ABCDEFGHIJKLM80") |> should.be_false
+}
+
+/// The exact examples shown in the README must work as documented.
+pub fn readme_examples_test() {
+  cnpj.validate("84.980.771/0001-82") |> should.be_true
+  cnpj.validate("12.ABC.345/01DE-35") |> should.be_true
+  cnpj.validate("12abc34501de35") |> should.be_true
+  cnpj.format("84980771000182") |> should.equal(Ok("84.980.771/0001-82"))
+  cnpj.format("12ABC34501DE35") |> should.equal(Ok("12.ABC.345/01DE-35"))
+  cnpj.strip("84.980.771/0001-82") |> should.equal(Ok("84980771000182"))
+  cnpj.strip("12.ABC.345/01DE-35") |> should.equal(Ok("12ABC34501DE35"))
+}
+
+/// Regression test: the random body digits must be able to contain a 9.
+/// A previous bug used `int.random(9)` (range 0..8), so the digit 9 never
+/// appeared in the randomly generated portion of a CNPJ.
+pub fn generate_cnpj_body_can_contain_nine_test() {
+  let bodies =
+    list.repeat(0, 2000)
+    |> list.map(fn(_) { cnpj.generate(False) |> string.slice(0, 12) })
+    |> string.join("")
+
+  string.contains(bodies, "9") |> should.be_true
+}
+
+/// The generator must not keep emitting the same value.
+pub fn generate_cnpj_produces_varied_values_test() {
+  let docs = list.repeat(0, 100) |> list.map(fn(_) { cnpj.generate(False) })
+  { list.unique(docs) |> list.length > 1 } |> should.be_true
+}
+
+/// Every generated CNPJ round-trips losslessly through format and strip.
+pub fn format_strip_roundtrip_cnpj_test() {
+  list.repeat(0, 1000)
+  |> list.each(fn(_) {
+    let unformatted = cnpj.generate(False)
+    let assert Ok(formatted) = cnpj.format(unformatted)
+    cnpj.strip(formatted) |> should.equal(Ok(unformatted))
+    cnpj.strict_validate(formatted) |> should.be_true
+  })
 }
 
 fn valid_cnpj_list() {
