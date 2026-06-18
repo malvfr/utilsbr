@@ -20,10 +20,13 @@ pub fn validate_same_digits_test() {
 
 pub fn validate_valid_cpfs_test() {
   valid_cpf_list()
-  |> list.each(fn(cpf) {
-    cpf.validate(cpf)
-    should.be_true
-  })
+  |> list.each(fn(cpf) { cpf.validate(cpf) |> should.be_true })
+}
+
+/// Every CPF in the formatted fixture list must also pass strict validation.
+pub fn strict_validate_valid_cpfs_test() {
+  valid_cpf_list()
+  |> list.each(fn(cpf) { cpf.strict_validate(cpf) |> should.be_true })
 }
 
 pub fn validate_less_than_11_digits_test() {
