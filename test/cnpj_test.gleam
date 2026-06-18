@@ -1,3 +1,4 @@
+import gleam/int
 import gleam/list
 import gleam/regexp
 import gleam/string
@@ -376,6 +377,15 @@ pub fn validate_alphanumeric_with_unicode_test() {
   cnpj.validate("AA🎉345🎈678🎊000🎁114") |> should.be_true
 }
 
+/// A flag emoji is a single grapheme composed of multiple codepoints. Cleaning
+/// must drop it (exercising the multi-codepoint arm of the character filter)
+/// and still validate the remaining characters.
+pub fn validate_alphanumeric_with_multi_codepoint_grapheme_test() {
+  cnpj.validate("12🇧🇷ABC34501DE35") |> should.be_true
+  cnpj.validate("🇧🇷12ABC34501DE35🇧🇷") |> should.be_true
+  cnpj.validate("AA👍🏽345678000114") |> should.be_true
+}
+
 pub fn strict_validate_alphanumeric_test() {
   // Valid formatted alphanumeric CNPJs
   cnpj.strict_validate("12.ABC.345/01DE-35") |> should.be_true
@@ -542,6 +552,85 @@ pub fn format_strip_roundtrip_cnpj_test() {
     let assert Ok(formatted) = cnpj.format(unformatted)
     cnpj.strip(formatted) |> should.equal(Ok(unformatted))
     cnpj.strict_validate(formatted) |> should.be_true
+  })
+}
+
+// --- Differential / property test ------------------------------------------
+//
+// An independent reimplementation of the Receita Federal alphanumeric
+// algorithm (ASCII-48 char values, weights, mod 11), written from the spec
+// without touching the library internals. For thousands of random bases we
+// assert the library agrees: the correct check digits validate and any other
+// pair does not. Random bases naturally drive the mod-11 remainder across all
+// values (including 0 and 1), exercising every check-digit branch.
+
+const base36 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+fn ref_char_value(c: String) -> Int {
+  let assert [cp] = string.to_utf_codepoints(c)
+  string.utf_codepoint_to_int(cp) - 48
+}
+
+fn ref_weighted_sum(chars: List(String), weights: List(Int)) -> Int {
+  list.zip(chars, weights)
+  |> list.fold(0, fn(acc, pair) {
+    let #(c, w) = pair
+    acc + ref_char_value(c) * w
+  })
+}
+
+fn ref_dv(remainder: Int) -> Int {
+  case remainder < 2 {
+    True -> 0
+    False -> 11 - remainder
+  }
+}
+
+fn ref_check_digits(base: String) -> String {
+  let chars = string.to_graphemes(base)
+  let dv1 =
+    ref_dv(ref_weighted_sum(chars, [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]) % 11)
+  let chars2 = list.append(chars, [int.to_string(dv1)])
+  let dv2 =
+    ref_dv(
+      ref_weighted_sum(chars2, [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]) % 11,
+    )
+  int.to_string(dv1) <> int.to_string(dv2)
+}
+
+fn random_base() -> String {
+  list.repeat(0, 12)
+  |> list.map(fn(_) { string.slice(base36, int.random(36), 1) })
+  |> string.join("")
+}
+
+fn all_same(s: String) -> Bool {
+  case string.to_graphemes(s) {
+    [first, ..rest] -> list.all(rest, fn(c) { c == first })
+    [] -> True
+  }
+}
+
+pub fn alphanumeric_differential_property_test() {
+  list.repeat(0, 5000)
+  |> list.each(fn(_) {
+    let base = random_base()
+    // Skip degenerate all-identical bases: those are rejected by the
+    // all-identical guard regardless of their (otherwise correct) digits.
+    case all_same(base) {
+      True -> Nil
+      False -> {
+        let dv = ref_check_digits(base)
+        // Correct check digits must validate.
+        cnpj.validate(base <> dv) |> should.be_true
+        // Any other 2-digit pair must fail (exactly one pair is valid).
+        let wrong = case dv {
+          "00" -> "01"
+          _ -> "00"
+        }
+        cnpj.validate(base <> wrong) |> should.be_false
+      }
+    }
   })
 }
 
