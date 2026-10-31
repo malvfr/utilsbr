@@ -11,15 +11,14 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: erlef/setup-beam@v1
         with:
-          otp-version: "29.0.2"
-          gleam-version: "1.17.0"
-          rebar3-version: "3"
-      - uses: actions/setup-node@v4
+          otp-version: "29.1"
+          gleam-version: "1.19.2"
+      - uses: actions/setup-node@v7
         with:
-          node-version: "24"
+          node-version: "26"
       - run: gleam deps download
       - run: gleam test --target erlang
       - run: gleam test --target javascript
