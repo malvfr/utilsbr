@@ -13,7 +13,7 @@ A Gleam library for Brazilian document validation and generation. Provides utili
 - **CPF utilities**: validation, generation, formatting, and stripping
 - **CNPJ utilities**: validation, generation, formatting, and stripping
 - **Unified CNPJ handling**: all functions automatically work with both numeric and alphanumeric formats
-- **Alphanumeric CNPJ support**: seamless support for the new format announced by Receita Federal (effective July 2026)
+- **Alphanumeric CNPJ support**: seamless support for the new format announced by Receita Federal (in effect since July 2026)
 - **Flexible and strict validation modes**: choose between lenient or strict format validation
 - **Type-safe**: leverages Gleam's type system for reliable document handling
 
@@ -76,7 +76,7 @@ cpf.strip("873.220.050-15")  // Ok("87322005015")
 
 All CNPJ functions work seamlessly with both numeric and alphanumeric formats. The library automatically detects the format and applies the appropriate validation and formatting rules.
 
-**Alphanumeric CNPJ Support**: Starting from version 0.6.0, utilsbr supports the new alphanumeric CNPJ format announced by Receita Federal (effective July 2026). The alphanumeric CNPJ consists of 12 alphanumeric characters (A-Z and 0-9) followed by 2 numeric verification digits.
+**Alphanumeric CNPJ Support**: Starting from version 0.6.0, utilsbr supports the new alphanumeric CNPJ format announced by Receita Federal (in effect since July 2026). The alphanumeric CNPJ consists of 12 alphanumeric characters (A-Z and 0-9) followed by 2 numeric verification digits.
 
 ```gleam
 import utilsbr/cnpj
